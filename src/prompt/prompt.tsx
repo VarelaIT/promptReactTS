@@ -1,30 +1,21 @@
 import React, { ReactNode, useState, createContext, useContext, useMemo } from "react";
+
 export interface IPromptProps{
+    title?: string;
     message: string;
     options: Array<any>;
-    title?: string;
-}
-
-export function Prompt({message, options, title}: IPromptProps, callback: (value: any)=> void){
-    const [state, setState] = useState(false);
-    const prompt = useContext(PromptContext);
-
-    useMemo(()=> {
-        callback(state);
-        console.log("Prompt result: ", state);
-    }, [state]);
-
-    prompt?.add(message, options, setState, title);
+    setResult: React.Dispatch<React.SetStateAction<any>>;
+    Render: (parameter:  {config: PromptObject})=> ReactNode;
 }
  
-export type AddPromptFC = (message: string, options: Array<any>, setResult: React.Dispatch<React.SetStateAction<any>>, title?: string)=> void;
+export type AddPromptFC = ({title, message, options, setResult, Render}: IPromptProps)=> void;
 export const PromptContext = createContext< {add: AddPromptFC} | undefined >(undefined);
 
 export function PromptReactJS({children}: {children: ReactNode}){
-    const [promptElements, setPromptElements] = useState<PromptObject[]>([]);
+    const [promptElements, setPromptElements] = useState<Array<{render: (parameter: {config: PromptObject})=> ReactNode, config: PromptObject}>>([]);
    
-    const addPrompt: AddPromptFC = (message: string, options: Array<any>, setResult: React.Dispatch<React.SetStateAction<any>>, title?: string) => {
-        const element =  new PromptObject(message, options, setResult, setPromptElements, title);
+    const addPrompt: AddPromptFC = ({title, message, options, setResult, Render}: IPromptProps) => {
+        const element = {render: Render, config: new PromptObject(message, options, setResult, setPromptElements, title)};
         setPromptElements([...promptElements, element])
     }
 
@@ -32,14 +23,10 @@ export function PromptReactJS({children}: {children: ReactNode}){
         <PromptContext.Provider value={{add: addPrompt}}>
             {children}
             <section>
-                {promptElements.map((item: PromptObject, i: number)=> {
-                    item.setIndex(i);
+                {promptElements.map((item, i)=> {
+                    item.config.setIndex(i);
                     return (
-                        <button key={"promptReactJS-node-" + i}
-                            onClick={()=> item.close()}
-                        >
-                            {item.message + ". element " + i}
-                        </button>
+                        <item.render config={item.config}/>
                     );
                 })}
             </section>
@@ -71,13 +58,13 @@ export class PromptObject{
     message: string;
     options: Array<any>;
     setter: React.Dispatch<React.SetStateAction<any>>;
-    setPromptElements: React.Dispatch<React.SetStateAction<PromptObject[]>>;  
+    setPromptElements: React.Dispatch<React.SetStateAction<Array<{render: (parameter: {config: PromptObject})=> ReactNode, config: PromptObject}>>>;
 
     constructor(
         message: string, 
         options: Array<any>, 
         setter: React.Dispatch<React.SetStateAction<any>>, 
-        setPromptElements: React.Dispatch<React.SetStateAction<PromptObject[]>>,  
+        setPromptElements: React.Dispatch<React.SetStateAction<Array<{render: (parameter: {config: PromptObject})=> ReactNode, config: PromptObject}>>>,
         title?: string
     ){
         this.title = title;
@@ -93,10 +80,10 @@ export class PromptObject{
 
     setValue(value: any){
         this.setter(value);
+        this.close();
     }
 
     close(){
-        this.setter(undefined);
         this.setPromptElements((prev)=> prev.filter((_, i)=> i !== this.index))
     }
 
