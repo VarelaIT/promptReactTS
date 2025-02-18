@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PromptObject } from "../prompt/prompt";
 
-export function ConfirmModal({config}: {config: PromptObject}){
+export function ConfirmCancelModal({config}: {config: PromptObject}){
     const dialogRef = useRef(null);
 
     useEffect(()=> {
@@ -11,11 +11,16 @@ export function ConfirmModal({config}: {config: PromptObject}){
         }
     }, [dialogRef]);
 
+    const [currentValue, setCurrentValue] = useState<any>(undefined);
+
     return (
         <dialog ref={dialogRef}
             style={{
+                backgroundColor: "#FFF",
+                color: "#333",
                 border: "none",
                 borderRadius: "16px",
+                marginBottom: "700px",
             }}
         >
             <article>
@@ -33,6 +38,16 @@ export function ConfirmModal({config}: {config: PromptObject}){
                     >Close</button>
                 </header>
                 <p>{config.message}</p>
+                <p>
+                    <select
+                        value={currentValue}
+                        onChange={(ev)=> setCurrentValue(ev.target.value)}
+                    >
+                        {config.options.map((item, i)=>
+                            <option key={"optionNuber" + i} value={item.count}>{item.day}</option>
+                        )}
+                    </select>
+                </p>
                 <footer
                     style={{
                         display: "flex",
@@ -40,9 +55,14 @@ export function ConfirmModal({config}: {config: PromptObject}){
                     }}
                 >
                     <button
-                        onClick={()=> config.setValue(config.options[0])}
+                        onClick={()=> config.setValue(currentValue)}
                     >
                         OK
+                    </button>
+                    <button
+                        onClick={()=> config.setValue(false)}
+                    >
+                        Cancel
                     </button>
                 </footer>
             </article>

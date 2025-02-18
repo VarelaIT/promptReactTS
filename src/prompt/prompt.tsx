@@ -26,7 +26,7 @@ export function PromptReactJS({children}: {children: ReactNode}){
                 {promptElements.map((item, i)=> {
                     item.config.setIndex(i);
                     return (
-                        <item.render config={item.config}/>
+                        <item.render key={"promptElementNumber" + i}config={item.config}/>
                     );
                 })}
             </section>
